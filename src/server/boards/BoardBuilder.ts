@@ -7,6 +7,7 @@ import {Random} from '../../common/utils/Random';
 import {inplaceShuffle} from '../utils/shuffle';
 import {GameOptions} from '../game/GameOptions';
 import {expansionSpaceColonies} from '../../common/boards/expansionSpaceColonies';
+import {CardName} from '../../common/cards/CardName';
 
 function colonySpace(id: SpaceId): Space {
   return {id, spaceType: SpaceType.COLONY, x: -1, y: -1, bonus: []};
@@ -54,6 +55,12 @@ export class BoardBuilder {
     return this;
   }
 
+  deflectionZone(...bonus: Array<SpaceBonus>): this {
+    this.spaceTypes.push(SpaceType.DEFLECTION_ZONE);
+    this.bonuses.push(bonus);
+    return this.doNotShuffleLastSpace();
+  }
+
   doNotShuffleLastSpace(): this {
     this.unshufflableSpaces.push(this.spaceTypes.length - 1);
     return this;
@@ -88,13 +95,15 @@ export class BoardBuilder {
 
     // Include space colonies if the expansion is included, or if the card is included.
     for (const entry of expansionSpaceColonies) {
-      let e: keyof GameOptions = 'boardName'; // arbitrary
-      switch (entry.expansion) {
-      case 'promo': e = 'promoCardsOption'; break;
-      case 'pathfinders': e = 'pathfindersExpansion'; break;
-      case 'venus': e = 'venusNextExtension'; break;
+      // Special case for Venera Base when Pathfinders is included, but Turmoil or Venus is not
+      if (entry.card === CardName.VENERA_BASE) {
+        const pathfindersTurmoilVenusInPlay = this.gameOptions.pathfindersExpansion && this.gameOptions.turmoilExtension && this.gameOptions.venusNextExtension;
+        if (this.gameOptions.includedCards.includes(entry.card) || pathfindersTurmoilVenusInPlay) {
+          this.spaces.push(colonySpace(entry.name));
+        }
+        continue;
       }
-      if (this.gameOptions[e] || this.gameOptions.includedCards.includes(entry.card)) {
+      if (this.gameOptions.expansions[entry.expansion] || this.gameOptions.includedCards.includes(entry.card)) {
         this.spaces.push(colonySpace(entry.name));
       }
     }

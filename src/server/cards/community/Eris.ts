@@ -13,6 +13,7 @@ import {Size} from '../../../common/cards/render/Size';
 import {TileType, tileTypeToString} from '../../../common/TileType';
 import {LogHelper} from '../../LogHelper';
 import {AresHandler} from '../../ares/AresHandler';
+import {ICorporationCard} from '../corporation/ICorporationCard';
 
 const ARES_CARDS = [
   CardName.BIOENGINEERING_ENCLOSURE,
@@ -43,7 +44,7 @@ const ARES_CARDS = [
   CardName.SOLAR_FARM,
 ];
 
-export class Eris extends CorporationCard {
+export class Eris extends CorporationCard implements ICorporationCard {
   constructor() {
     super({
       name: CardName.ERIS,
@@ -67,7 +68,7 @@ export class Eris extends CorporationCard {
     });
   }
 
-  public initialAction(player: IPlayer) {
+  public override initialAction(player: IPlayer) {
     this.drawAresCard(player);
     return undefined;
   }
@@ -141,6 +142,6 @@ export class Eris extends CorporationCard {
   }
 
   public static getAllUnprotectedHazardSpaces(game: IGame) {
-    return game.board.getHazards().filter((space) => space.tile?.protectedHazard !== true);
+    return game.board.getHazards(/* includeProtected= */ false);
   }
 }

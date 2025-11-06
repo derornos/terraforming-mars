@@ -389,21 +389,21 @@ describe('Colony', () => {
   });
 
   it('usesTradeFleet', () => {
-    expect(player.colonies.tradesThisGeneration).eq(0);
+    expect(player.colonies.usedTradeFleets).eq(0);
     luna.trade(player);
-    expect(player.colonies.tradesThisGeneration).eq(1);
+    expect(player.colonies.usedTradeFleets).eq(1);
 
     luna.trade(player, {});
-    expect(player.colonies.tradesThisGeneration).eq(2);
+    expect(player.colonies.usedTradeFleets).eq(2);
 
     luna.trade(player, {usesTradeFleet: false});
-    expect(player.colonies.tradesThisGeneration).eq(2);
+    expect(player.colonies.usedTradeFleets).eq(2);
 
     luna.trade(player, {usesTradeFleet: true});
-    expect(player.colonies.tradesThisGeneration).eq(3);
+    expect(player.colonies.usedTradeFleets).eq(3);
   });
 
-  it('../../../src if player should move the track', () => {
+  it('if player should move the track', () => {
     const l1TradeTerminal = new L1TradeTerminal();
     cast(l1TradeTerminal.play(player), undefined);
     // Mercury has different rewards, so the player will want to choose how far up to move the track.

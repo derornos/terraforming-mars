@@ -28,22 +28,24 @@ describe('ProjectWorkshop', () => {
   let card: ProjectWorkshop;
   let player: TestPlayer;
   let game: IGame;
-  let advancedAlloys : AdvancedAlloys;
+  let advancedAlloys: AdvancedAlloys;
+  let birds: Birds;
 
   beforeEach(() => {
     card = new ProjectWorkshop();
     advancedAlloys = new AdvancedAlloys();
+    birds = new Birds();
     [game, player] = testGame(1);
 
     card.play(player);
-    player.corporations.push(card);
+    player.playedCards.push(card);
   });
 
   it('Starts with correct resources', () => {
     expect(player.steel).to.eq(1);
     expect(player.titanium).to.eq(1);
 
-    player.deferInitialAction(card);
+    player.defer(card.initialAction(player));
     runAllActions(game);
     expect(player.cardsInHand).has.lengthOf(1);
     expect(player.cardsInHand[0].type).to.eq(CardType.ACTIVE);
@@ -73,11 +75,22 @@ describe('ProjectWorkshop', () => {
     expect(player.getTitaniumValue()).to.eq(4);
 
     card.action(player).cb(undefined);
-    expect(player.playedCards).has.lengthOf(0);
+    expect(player.playedCards.asArray()).deep.eq([card]);
     expect(game.projectDeck.discardPile.includes(advancedAlloys)).is.true;
     expect(player.cardsInHand).has.lengthOf(2);
     expect(player.getSteelValue()).to.eq(2);
     expect(player.getTitaniumValue()).to.eq(3);
+  });
+
+  it('Can flip a played blue card and remove its resources', () => {
+    player.playedCards.push(birds);
+    birds.resourceCount = 4;
+
+    card.action(player).cb(undefined);
+
+    expect(player.playedCards.asArray()).deep.eq([card]);
+    expect(game.projectDeck.discardPile.includes(birds)).is.true;
+    expect(birds.resourceCount).eq(0);
   });
 
   it('Converts VP to TR correctly', () => {
@@ -87,24 +100,24 @@ describe('ProjectWorkshop', () => {
     const extremophiles = new Extremophiles();
     player.addResourceTo(extremophiles, 11);
 
-    const originalTR = player.getTerraformRating();
+    const originalTR = player.terraformRating;
     player.playedCards.push(smallAnimals, extremophiles);
 
     const selectOption = cast(card.action(player), SelectOption);
     const selectCard = cast(selectOption.cb(undefined), SelectCard<ICard>);
 
     selectCard.cb([smallAnimals]);
-    expect(player.getTerraformRating()).to.eq(originalTR + 2);
+    expect(player.terraformRating).to.eq(originalTR + 2);
     expect(player.cardsInHand).has.lengthOf(2);
 
     selectCard.cb([extremophiles]);
-    expect(player.getTerraformRating()).to.eq(originalTR + 5);
+    expect(player.terraformRating).to.eq(originalTR + 5);
     expect(player.cardsInHand).has.lengthOf(4);
   });
 
   it('Converts VP to TR correctly when counting tags', () => {
     const waterImportFromEuropa = new WaterImportFromEuropa();
-    const originalTR = player.getTerraformRating();
+    const originalTR = player.terraformRating;
 
     player.playedCards.push(waterImportFromEuropa);
     player.actionsThisGeneration.add(waterImportFromEuropa.name);
@@ -113,14 +126,14 @@ describe('ProjectWorkshop', () => {
     const selectOption = cast(card.action(player), SelectOption);
     cast(selectOption.cb(undefined), undefined);
 
-    expect(player.getTerraformRating()).to.eq(originalTR + 2);
+    expect(player.terraformRating).to.eq(originalTR + 2);
     expect(player.playedCards).does.not.include(waterImportFromEuropa);
   });
 
 
   it('Converts VP to TR correctly when counting wild tags', () => {
     const waterImportFromEuropa = new WaterImportFromEuropa();
-    const originalTR = player.getTerraformRating();
+    const originalTR = player.terraformRating;
 
     player.playedCards.push(waterImportFromEuropa);
     player.actionsThisGeneration.add(waterImportFromEuropa.name);
@@ -130,7 +143,7 @@ describe('ProjectWorkshop', () => {
     const selectOption = cast(card.action(player), SelectOption);
     cast(selectOption.cb(undefined), undefined);
 
-    expect(player.getTerraformRating()).to.eq(originalTR + 3);
+    expect(player.terraformRating).to.eq(originalTR + 3);
     expect(player.playedCards).does.not.include(waterImportFromEuropa);
   });
 
@@ -145,15 +158,15 @@ describe('ProjectWorkshop', () => {
     const ancientShipyards = new AncientShipyards();
     player.addResourceTo(ancientShipyards, 5);
 
-    const originalTR = player.getTerraformRating();
+    const originalTR = player.terraformRating;
     player.playedCards.push(ancientShipyards);
 
     const selectOption = cast(card.action(player), SelectOption);
 
     expect(selectOption.cb(undefined)).is.undefined;
-    expect(player.playedCards).is.empty;
+    expect(player.playedCards.asArray()).deep.eq([card]);
 
-    expect(player.getTerraformRating()).to.eq(originalTR - 5);
+    expect(player.terraformRating).to.eq(originalTR - 5);
     expect(player.cardsInHand).has.lengthOf(2);
   });
 
@@ -161,7 +174,7 @@ describe('ProjectWorkshop', () => {
   it('Project Workshop and Reds taxes', () => {
     [game, player] = testGame(1, {turmoilExtension: true});
     card.play(player);
-    player.corporations.push(card);
+    player.playedCards.push(card);
     player.game.phase = Phase.ACTION;
 
     const turmoil = game.turmoil!;
@@ -176,7 +189,6 @@ describe('ProjectWorkshop', () => {
     player.addResourceTo(extremophiles, 9);
     expect(extremophiles.getVictoryPoints(player)).eq(3);
 
-    const birds = new Birds();
     birds.resourceCount = 1;
     expect(birds.getVictoryPoints(player)).eq(1);
 
@@ -196,23 +208,23 @@ describe('ProjectWorkshop', () => {
     player.megaCredits = 6;
     expect(selectCard().cards).has.members([smallAnimals, birds]);
 
-    const originalTR = player.getTerraformRating();
+    const originalTR = player.terraformRating;
     player.megaCredits = 5;
 
     const orOptions = cast(card.action(player), OrOptions);
     expect(orOptions.options[1].cb()).is.undefined;
     runAllActions(game);
 
-    expect(player.playedCards).has.members([smallAnimals, extremophiles]);
+    expect(player.playedCards.asArray()).has.members([card, smallAnimals, extremophiles]);
     expect(game.projectDeck.discardPile).contains(birds);
-    expect(player.getTerraformRating()).to.eq(originalTR + 1);
+    expect(player.terraformRating).to.eq(originalTR + 1);
     expect(player.megaCredits).eq(2); // Spent 3MC for the reds tax.
   });
 
   it('Project Workshop + Helion', () => {
     const helion = new Helion();
     helion.play(player);
-    player.corporations.push(helion);
+    player.playedCards.push(helion);
 
     player.megaCredits = 2;
     expect(card.canAct(player)).is.false;

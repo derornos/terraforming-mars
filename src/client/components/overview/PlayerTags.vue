@@ -14,12 +14,17 @@
         </div>
         <div class="player-tags-secondary">
           <div class="tag-count-container" v-for="tagDetail of tags" :key="tagDetail.name">
-            <div class="tag-and-discount" v-if="tagDetail.name !== 'separator'">
+            <template v-if="tagDetail.name === SpecialTags.UNDERGROUND_TOKEN_COUNT">
+              <div class="tag-and-discount">
+              <tag-count :tag="tagDetail.name" :undergroundToken="player.underworldData.activeBonus" :count="tagDetail.count" :size="'big'" :type="'secondary'"/>
+              </div>
+            </template>
+            <div v-else-if="tagDetail.name === 'separator'" class="tag-separator"></div>
+            <div v-else class="tag-and-discount">
               <PlayerTagDiscount v-if="tagDetail.discount > 0" :color="player.color" :amount="tagDetail.discount" :data-test="'discount-' + tagDetail.name"/>
               <PointsPerTag :points="tagDetail"/>
               <tag-count :tag="tagDetail.name" :count="tagDetail.count" :size="'big'" :type="'secondary'"/>
             </div>
-            <div v-else-if="tagDetail.name === 'separator'" class="tag-separator"></div>
           </div>
         </div>
     </div>
@@ -63,6 +68,7 @@ const ORDER: Array<InterfaceTagsType> = [
   Tag.CITY,
   Tag.MOON,
   Tag.MARS,
+  Tag.CRIME,
   'separator',
   Tag.EVENT,
   SpecialTags.NONE,
@@ -70,7 +76,7 @@ const ORDER: Array<InterfaceTagsType> = [
   SpecialTags.INFLUENCE,
   SpecialTags.CITY_COUNT,
   SpecialTags.COLONY_COUNT,
-  SpecialTags.EXCAVATIONS,
+  SpecialTags.UNDERGROUND_TOKEN_COUNT,
   SpecialTags.CORRUPTION,
   SpecialTags.NEGATIVE_VP,
 ];
@@ -83,13 +89,14 @@ const isInGame = (tag: InterfaceTagsType, game: GameModel): boolean => {
     return gameOptions.expansions.colonies !== false;
   case SpecialTags.INFLUENCE:
     return game.turmoil !== undefined;
-  case SpecialTags.EXCAVATIONS:
+  case SpecialTags.UNDERGROUND_TOKEN_COUNT:
   case SpecialTags.CORRUPTION:
   case SpecialTags.NEGATIVE_VP:
     return gameOptions.expansions.underworld !== false;
   case Tag.VENUS:
   case Tag.MOON:
   case Tag.MARS:
+  case Tag.CRIME:
     return game.tags.includes(tag);
   }
   return true;
@@ -105,10 +112,10 @@ const getTagCount = (tagName: InterfaceTagsType, player: PublicPlayerModel): num
     return player.citiesCount || 0;
   case SpecialTags.NONE:
     return player.noTagsCount || 0;
-  case SpecialTags.EXCAVATIONS:
-    return player.excavations;
+  case SpecialTags.UNDERGROUND_TOKEN_COUNT:
+    return player.underworldData.tokens.length;
   case SpecialTags.CORRUPTION:
-    return player.corruption;
+    return player.underworldData.corruption;
   case SpecialTags.NEGATIVE_VP:
     return player.victoryPointsBreakdown.negativeVP;
   case 'all':
@@ -163,13 +170,19 @@ export default Vue.extend({
       // Special case Cultivation of Venus & Venera Base.
       // See https://github.com/terraforming-mars/terraforming-mars/issues/5236
       if (card.name === CardName.CULTIVATION_OF_VENUS || card.name === CardName.VENERA_BASE) {
-        details[Tag.VENUS].halfPoints ++;
+        details[Tag.VENUS].halfPoints++;
       } else {
         const vps = getCard(card.name)?.victoryPoints;
-        if (vps !== undefined && typeof(vps) !== 'number' && vps !== 'special' && vps.tag !== undefined) {
-          details[vps.tag].points += ((vps.each ?? 1) / (vps.per ?? 1));
+        if (vps !== undefined && typeof(vps) !== 'number' && vps !== 'special') {
+          if (vps.tag !== undefined) {
+            details[vps.tag].points += ((vps.each ?? 1) / (vps.per ?? 1));
+          }
+          if (vps.cities !== undefined) {
+            details['city-count'].points += ((vps.each ?? 1) / (vps.per ?? 1));
+          }
         }
       }
+      // Special case Off-world City Living and Immigration Shuttles
     }
 
     // Other modifiers
@@ -207,7 +220,7 @@ export default Vue.extend({
       return !this.playerView.game.gameOptions.showOtherPlayersVP && !this.isThisPlayer;
     },
     isEscapeVelocityOn(): boolean {
-      return this.playerView.game.gameOptions.escapeVelocityMode;
+      return this.playerView.game.gameOptions.escapeVelocity !== undefined;
     },
     escapeVelocityPenalty(): number {
       return this.player.victoryPointsBreakdown.escapeVelocity;
@@ -230,6 +243,9 @@ export default Vue.extend({
         }
         return true;
       });
+    },
+    SpecialTags() {
+      return SpecialTags;
     },
   },
 });

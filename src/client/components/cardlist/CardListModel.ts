@@ -2,9 +2,25 @@ import {Tag} from '@/common/cards/Tag';
 import {CardType} from '@/common/cards/CardType';
 import {GameModule, GAME_MODULES} from '@/common/cards/GameModule';
 import {SearchIndex} from '@/client/components/cardlist/SearchIndex';
+import {CardResource} from '@/common/CardResource';
 
-export type TypeOption = CardType | 'colonyTiles' | 'globalEvents' | 'milestones' | 'awards';
-type TagOption = Tag | 'none';
+export type TypeOption = CardType | 'colonyTiles' | 'globalEvents' | 'milestones' | 'awards' | 'agendas';
+export type TagOption = Tag | 'none';
+export type ResourceOption = CardResource | 'none';
+
+export type CardListModel = {
+  filterText: string,
+  expansions: Record<GameModule, boolean>,
+  types: Record<TypeOption, boolean>,
+  tags: Record<TagOption, boolean>,
+  resources: Record<ResourceOption, boolean>,
+  searchIndex: SearchIndex,
+  namesOnly: boolean,
+  showAdvanced: boolean;
+  sortOrder: 'a' | '1';
+  showMetadata: boolean;
+  vps: number; // 0: all, 1: VPs, 2: no vps
+}
 
 const MODULE_ABBREVIATIONS: Record<GameModule, string> = {
   base: 'b',
@@ -38,6 +54,7 @@ const TYPE_ABBREVIATIONS: Record<TypeOption, string> = {
   globalEvents: 'e',
   milestones: 'm',
   awards: 'a',
+  agendas: 't',
 };
 
 const TAG_ABBREVIATIONS: Record<TagOption, string> = {
@@ -58,19 +75,8 @@ const TAG_ABBREVIATIONS: Record<TagOption, string> = {
   [Tag.EVENT]: 'e',
   [Tag.CLONE]: 'f',
   none: 'g',
+  [Tag.CRIME]: 'h',
 };
-
-export type CardListModel = {
-  filterText: string,
-  expansions: Record<GameModule, boolean>,
-  types: Record<TypeOption, boolean>,
-  tags: Record<TagOption, boolean>,
-  searchIndex: SearchIndex,
-  namesOnly: boolean,
-  showAdvanced: boolean;
-  sortOrder: 'a' | '1';
-  showMetadata: boolean;
-}
 
 export function hashToModel(windowLocationHash: string): CardListModel {
   const model: CardListModel = {
@@ -106,6 +112,7 @@ export function hashToModel(windowLocationHash: string): CardListModel {
       milestones: true,
       awards: true,
       ceo: true,
+      agendas: true,
     },
     tags: {
       building: true,
@@ -121,14 +128,45 @@ export function hashToModel(windowLocationHash: string): CardListModel {
       city: true,
       moon: true,
       mars: true,
+      crime: true,
       wild: true,
       event: true,
       clone: true,
       none: true,
     },
+    resources: {
+      none: true,
+      [CardResource.ANIMAL]: true,
+      [CardResource.MICROBE]: true,
+      [CardResource.FIGHTER]: true,
+      [CardResource.SCIENCE]: true,
+      [CardResource.FLOATER]: true,
+      [CardResource.ASTEROID]: true,
+      [CardResource.CAMP]: true,
+      [CardResource.PRESERVATION]: true,
+      [CardResource.DIRECTOR]: true,
+      [CardResource.DISEASE]: true,
+      [CardResource.GRAPHENE]: true,
+      [CardResource.HYDROELECTRIC_RESOURCE]: true,
+      [CardResource.RESOURCE_CUBE]: true,
+      [CardResource.DATA]: true,
+      [CardResource.SYNDICATE_FLEET]: true,
+      [CardResource.VENUSIAN_HABITAT]: true,
+      [CardResource.SPECIALIZED_ROBOT]: true,
+      [CardResource.SEED]: true,
+      [CardResource.AGENDA]: true,
+      [CardResource.ORBITAL]: true,
+      [CardResource.CLONE_TROOPER]: true,
+      [CardResource.TOOL]: true,
+      [CardResource.WARE]: true,
+      [CardResource.JOURNALISM]: true,
+      [CardResource.ACTIVIST]: true,
+      [CardResource.SUPPLY_CHAIN]: true,
+    },
     searchIndex: SearchIndex.create(),
     namesOnly: true,
     showAdvanced: false,
+    vps: 0,
     sortOrder: 'a',
     showMetadata: true,
   };

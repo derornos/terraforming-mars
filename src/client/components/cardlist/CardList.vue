@@ -17,6 +17,12 @@
             &#x2195;
         </button>
 
+        <button id="show-vps-only" v-on:click="toggleVps()" style="width: 63px;">
+            <span v-if="vps === 0" v-i18n>all</span>
+            <span v-if="vps === 1" v-i18n>VPS</span>
+            <span v-if="vps === 2" v-i18n>-VPs</span>
+        </button>
+
         <button id="show-metadata" v-on:click="toggleShowMetadata()" style="width: 30px;">
             <span v-if="showMetadata === true">■</span>
             <span v-else>□</span>
@@ -68,6 +74,21 @@
             <label :for="`${tag}-tag-checkbox`" class="expansion-button">
               <!-- a terrible hack, using expansion-icon because card-tag isn't enough to show the tag.-->
               <div :class="`expansion-icon card-tag tag-${tag}`"></div>
+            </label>
+          </span>
+        </div>
+
+        <!-- card resources -->
+        <div class="selection-row">
+          <button id="toggle-checkbox" v-on:click="invertResources()">
+              <span v-i18n>-</span>
+          </button>
+          <span v-for="resource in allResources" :key="resource">
+            <input type="checkbox" :name="`${resource}-cardType`" :id="`${resource}-resource-checkbox`" v-model="resources[resource]">
+            <label :for="`${resource}-resource-checkbox`" class="expansion-button">
+              <!-- a terrible hack, using expansion-icon because card-resource isn't enough to show the resource.-->
+              <div v-if="resource !== 'none'" class="expansion-icon card-resource" :class="cardResourceCSS[resource]"></div>
+              <div v-else class="expansion-icon card-tag tag-none"></div>
             </label>
           </span>
         </div>
@@ -156,6 +177,21 @@
         </template>
       </section>
 
+      <section>
+        <h2 v-i18n>Agendas</h2>
+        <template v-if="types.agendas">
+          <div class="player_home_colony_cont">
+            <div class="player_home_colony" v-for="id in allAgendaIds" :key="id">
+              <div class="turmoil_agenda_cont">
+                <div style="padding: 12px; background-image: linear-gradient(rgb(156, 96, 45), black); border-radius: 8px; height: 120px;">
+                  <turmoil-agenda :id="id"></turmoil-agenda><div style="text-align:center">{{ id }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </section>
+
       <div class="free-floating-preferences-icon">
         <preferences-icon></preferences-icon>
       </div>
@@ -167,7 +203,7 @@
 import Vue from 'vue';
 import {CardType} from '@/common/cards/CardType';
 import {CardName} from '@/common/cards/CardName';
-import {toName} from '@/common/utils/utils';
+import {getEnumStringValues, partition, toName} from '@/common/utils/utils';
 import {getPreferences} from '@/client/utils/PreferencesManager';
 import {GlobalEventName} from '@/common/turmoil/globalEvents/GlobalEventName';
 import {allGlobalEventNames, getGlobalEvent} from '@/client/turmoil/ClientGlobalEventManifest';
@@ -185,14 +221,18 @@ import {AwardName, awardNames} from '@/common/ma/AwardName';
 import {ClaimedMilestoneModel} from '@/common/models/ClaimedMilestoneModel';
 import {FundedAwardModel} from '@/common/models/FundedAwardModel';
 import {WithRefs} from 'vue-typed-refs';
+import {TypeOption, CardListModel, hashToModel, modelToHash, ResourceOption, TagOption} from '@/client/components/cardlist/CardListModel';
+import {getAward, getMilestone} from '@/client/MilestoneAwardManifest';
+import {BonusId, BONUS_IDS, PolicyId, POLICY_IDS} from '@/common/turmoil/Types';
 import Card from '@/client/components/card/Card.vue';
 import Colony from '@/client/components/colonies/Colony.vue';
 import GlobalEvent from '@/client/components/turmoil/GlobalEvent.vue';
 import PreferencesIcon from '@/client/components/PreferencesIcon.vue';
 import Milestone from '@/client/components/Milestone.vue';
 import Award from '@/client/components/Award.vue';
-import {TypeOption, CardListModel, hashToModel, modelToHash} from '@/client/components/cardlist/CardListModel';
-import {getAward, getMilestone} from '@/client/MilestoneAwardManifest';
+import TurmoilAgenda from '@/client/components/turmoil/TurmoilAgenda.vue';
+import {CardResource} from '@/common/CardResource';
+import {cardResourceCSS} from '../common/cardResources';
 
 type Refs = {
   filter: HTMLInputElement,
@@ -206,6 +246,7 @@ export default (Vue as WithRefs<Refs>).extend({
     Colony,
     Milestone,
     Award,
+    TurmoilAgenda,
     PreferencesIcon,
   },
   data(): CardListModel {
@@ -232,10 +273,11 @@ export default (Vue as WithRefs<Refs>).extend({
         'globalEvents',
         'milestones',
         'awards',
+        'agendas',
       ];
     },
-    allTags(): Array<Tag | 'none'> {
-      const results: Array<Tag | 'none'> = [];
+    allTags(): Array<TagOption> {
+      const results: Array<TagOption> = [];
       for (const tag in Tag) {
         if (Object.prototype.hasOwnProperty.call(Tag, tag)) {
           results.push((<any>Tag)[tag]);
@@ -243,11 +285,24 @@ export default (Vue as WithRefs<Refs>).extend({
       }
       return results.concat('none');
     },
+    allResources(): Array<ResourceOption> {
+      return [...getEnumStringValues(CardResource), 'none'];
+    },
     allMilestoneNames(): ReadonlyArray<MilestoneName> {
       return [...milestoneNames].sort();
     },
     allAwardNames(): ReadonlyArray<AwardName> {
       return [...awardNames].sort();
+    },
+    allAgendaIds(): ReadonlyArray<PolicyId | BonusId> {
+      const ids = (POLICY_IDS as ReadonlyArray<PolicyId | BonusId>).concat(BONUS_IDS);
+      const [official, expansion] = partition(ids, (id) => id.endsWith('01'));
+      official.sort(); // This puts matching party content together.
+      expansion.sort();
+      return [...official, ...expansion];
+    },
+    cardResourceCSS(): typeof cardResourceCSS {
+      return cardResourceCSS;
     },
   },
   methods: {
@@ -268,6 +323,9 @@ export default (Vue as WithRefs<Refs>).extend({
     },
     invertTags() {
       this.allTags.forEach((tag) => this.tags[tag] = !this.tags[tag]);
+    },
+    invertResources() {
+      this.allResources.forEach((resource) => this.resources[resource] = !this.resources[resource]);
     },
     invertTypes() {
       this.allTypes.forEach((type) => this.types[type] = !this.types[type]);
@@ -357,6 +415,25 @@ export default (Vue as WithRefs<Refs>).extend({
 
       if (!this.filterByTags(card)) return false;
       if (!this.types[card.type]) return false;
+      if (card.resourceType === undefined) {
+        if (this.resources.none === false) {
+          return false;
+        }
+      } else {
+        if (!this.resources[card.resourceType]) return false;
+      }
+      switch (this.vps) {
+      case 1:
+        if (card.victoryPoints === undefined) {
+          return false;
+        }
+        break;
+      case 2:
+        if (card.victoryPoints !== undefined) {
+          return false;
+        }
+        break;
+      }
       return this.expansions[card.module] === true;
     },
     showGlobalEvent(name: GlobalEventName): boolean {
@@ -412,6 +489,9 @@ export default (Vue as WithRefs<Refs>).extend({
     },
     toggleSortOrder(): void {
       this.sortOrder = this.sortOrder === 'a' ? '1' : 'a';
+    },
+    toggleVps(): void {
+      this.vps = (this.vps + 1) % 3;
     },
     toggleShowMetadata(): void {
       this.showMetadata = !this.showMetadata;

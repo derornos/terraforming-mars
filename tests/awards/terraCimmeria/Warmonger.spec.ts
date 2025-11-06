@@ -22,7 +22,6 @@ describe('Warmonger', () => {
   });
 
   it('score', () => {
-    player.playedCards = [];
     expect(award.getScore(player)).eq(0);
 
     // Tardigrades does not take from another card or player.
@@ -36,17 +35,17 @@ describe('Warmonger', () => {
     player.playedCards.push(new BigAsteroid());
     expect(award.getScore(player)).eq(2);
 
-    player.corporations.push(new TheDarksideofTheMoonSyndicate());
+    player.playedCards.push(new TheDarksideofTheMoonSyndicate());
     expect(award.getScore(player)).eq(3);
   });
 
   const expectedEvents: ReadonlyArray<CardName> = [CardName.AIR_RAID, CardName.ASTEROID, CardName.ANTI_TRUST_CRACKDOWN, CardName.BIG_ASTEROID,
-    CardName.CORPORATE_THEFT, CardName.COMET,
-    CardName.CORPORATE_BLACKMAIL, CardName.DEEPNUKING, CardName.DEIMOS_DOWN, CardName.DEIMOS_DOWN_ARES, CardName.DEIMOS_DOWN_PROMO,
+    CardName.CORPORATE_THEFT, CardName.COMET, CardName.CLASS_ACTION_LAWSUIT, CardName.CORPORATE_BLACKMAIL, CardName.COMET_FOR_VENUS,
+    CardName.DEEPNUKING, CardName.DEIMOS_DOWN, CardName.DEIMOS_DOWN_ARES, CardName.DEIMOS_DOWN_PROMO,
     CardName.DUST_STORM, CardName.FLOODING, CardName.GIANT_ICE_ASTEROID, CardName.HIRED_RAIDERS, CardName.HIRED_RAIDERS_UNDERWORLD,
     CardName.IMPACTOR_SWARM, CardName.INFRASTRUCTURE_OVERLOAD, /* CardName.LAW_SUIT is ignored */
-    CardName.METALLIC_ASTEROID, CardName.MINING_EXPEDITION, CardName.MONOPOLY, CardName.PLANT_TAX, CardName.RECKLESS_DETONATION,
-    CardName.REVOLTING_COLONISTS, CardName.ROAD_PIRACY, CardName.SABOTAGE, CardName.SERVER_SABOTAGE,
+    CardName.METALLIC_ASTEROID, CardName.MINING_EXPEDITION, CardName.MONOPOLY, CardName.PUBLIC_SPONSORED_GRANT, CardName.PLANT_TAX,
+    CardName.RECKLESS_DETONATION, CardName.REVOLTING_COLONISTS, CardName.ROAD_PIRACY, CardName.SABOTAGE,
     CardName.SMALL_ASTEROID, CardName.SMALL_COMET, CardName.SOLAR_STORM, CardName.SPECIAL_PERMIT,
     CardName.VIRUS,
   ] as const;
@@ -72,7 +71,7 @@ describe('Warmonger', () => {
         console.log('Skipping ' + cardName);
         return;
       }
-      expect(Warmonger.autoInclude(card)).to.be.false;
+      expect(Warmonger.autoInclude(card), 'This card is manually listed but is automatically identified.').to.be.false;
     });
   }
 });

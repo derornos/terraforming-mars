@@ -23,7 +23,7 @@ export class Deepmining extends Card implements IProjectCard {
       type: CardType.AUTOMATED,
       tags: [Tag.BUILDING],
       metadata: {
-        cardNumber: 'U29',
+        cardNumber: 'U029',
         renderData: CardRenderer.builder((b) => {
           b.excavate(1).asterix().br;
           b.production((pb) => pb.steel(1).or().titanium(1)).asterix();
@@ -37,6 +37,7 @@ export class Deepmining extends Card implements IProjectCard {
   steelTokens: ReadonlyArray<UndergroundResourceToken> = [
     'steel1production',
     'steel2',
+    'steel2plant',
     'steel2pertemp',
   ] as const;
   titaniumTokens: ReadonlyArray<UndergroundResourceToken> = [
@@ -51,7 +52,7 @@ export class Deepmining extends Card implements IProjectCard {
   }
 
   public getAvailableSpaces(player: IPlayer): ReadonlyArray<Space> {
-    return UnderworldExpansion.identifiedSpaces(player.game).filter((space) => {
+    return player.game.board.spaces.filter((space) => {
       if (space.excavator !== undefined) {
         return false;
       }
@@ -86,8 +87,7 @@ export class Deepmining extends Card implements IProjectCard {
   }
 
   protected spaceSelected(player: IPlayer, space: Space) {
-    UnderworldExpansion.excavate(player, space);
-    const token = space.undergroundResources;
+    const token = UnderworldExpansion.excavate(player, space);
     if (token === undefined) {
       throw new Error('unexpected failed deep mining');
     }

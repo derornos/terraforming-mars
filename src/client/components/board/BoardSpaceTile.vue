@@ -86,7 +86,7 @@ const descriptions: Record<TileType, string> = {
   [TileType.MINING_STEEL_BONUS]: 'Mining: steel bonus',
   [TileType.MINING_TITANIUM_BONUS]: 'Mining: titanium bonus',
   [TileType.MOON_MINE]: 'Moon Mine: 1 VP per adjacent road',
-  [TileType.MOON_HABITAT]: 'Moon Colony: 1 VP per adjacent road',
+  [TileType.MOON_HABITAT]: 'Moon Habitat: 1 VP per adjacent road',
   [TileType.MOON_ROAD]: 'Moon Road: 1 VP',
   [TileType.LUNA_TRAIN_STATION]: 'Luna Train Station: 2 VP per adjacent road',
   [TileType.LUNAR_MINE_URBANIZATION]: 'Luna Mine Urbanization: counts as both a colony and a mine tile.',
@@ -144,17 +144,22 @@ export default Vue.extend({
         }
         css += ' board-space-tile--' + cssClass;
       } else {
-        if (this.spaceType === SpaceType.OCEAN) {
+        switch (this.spaceType) {
+        case SpaceType.OCEAN:
           css += ' board-space-type-ocean';
-        } else if (this.spaceType === SpaceType.COVE) {
+          break;
+        case SpaceType.COVE:
           if (this.highlight !== 'volcanic') {
             // Custom for Arabia Terra's space Tikhonarov.
             css += ' board-space-type-cove';
           } else {
             css += ' board-space-type-volcanic-cove';
           }
-        } else if (this.spaceType !== SpaceType.RESTRICTED) {
-          css += ` board-space-type-land`;
+          break;
+        case SpaceType.RESTRICTED:
+          break;
+        default:
+          css += ' board-space-type-land';
 
           if (this.highlight) {
             css += ` board-space-type-land-${this.highlight}`;

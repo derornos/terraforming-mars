@@ -35,6 +35,7 @@ export type SerializedGame = {
     deferredActions: Array<DeferredAction>;
     donePlayers: Array<PlayerId>;
     draftRound: number;
+    exploitationOfVenusInEffect: boolean;
     first: PlayerId;
     fundedAwards: Array<SerializedFundedAward>;
     gagarinBase: Array<SpaceId>;
@@ -69,5 +70,5 @@ export type SerializedGame = {
     undoCount: number;
     underworldData: UnderworldData;
     venusScaleLevel: number;
+    verminInEffect: boolean;
 }
-

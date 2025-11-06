@@ -33,27 +33,27 @@ describe('Vitor', () => {
 
   it('No initial action for solo games', () => {
     testGame(1);
-    const action = player.deferInitialAction(card);
+    const action = player.defer(card.initialAction(player));
     cast(action, undefined);
   });
 
   it('Give megacredits when card played', () => {
-    player.corporations.push(card);
+    player.playedCards.push(card);
 
     // Dust Seals has victory points
-    card.onCardPlayed(player, new DustSeals());
+    card.onCardPlayedForCorps(player, new DustSeals());
     expect(player.megaCredits).to.eq(3);
 
     // Lava flows has none
-    card.onCardPlayed(player, new LavaFlows());
+    card.onCardPlayedForCorps(player, new LavaFlows());
     expect(player.megaCredits).to.eq(3);
 
     // Ants has dynamic victory points
-    card.onCardPlayed(player, new Ants());
+    card.onCardPlayedForCorps(player, new Ants());
     expect(player.megaCredits).to.eq(6);
 
     // This card has negative dynamic victory points
-    card.onCardPlayed(player, new AncientShipyards());
+    card.onCardPlayedForCorps(player, new AncientShipyards());
     expect(player.megaCredits).to.eq(6);
   });
 });

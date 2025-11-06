@@ -66,7 +66,7 @@ export const awardNames = [
 
   // Underworld
   'Kingpin',
-  'EdgeLord',
+  'Excavator',
 
   // Ares Extreme
   'Rugged',
@@ -82,7 +82,8 @@ export const awardNames = [
   'Metropolist',
   'Mogul',
   'Politician', // New Most party leaders and influence compbined
-  // 'Suburbian', // NEW Most tiles on areas along the edges of the map.
+  'Suburbian',
+  // 'Traveller',
   // 'Zoologist', // Most animal and microbe resources. Currently Zoologist2
 ] as const;
 
@@ -93,6 +94,8 @@ export const AWARD_RENAMES = new Map<string, AwardName>([
   // And remember to add a test in spec.ts.
 
   // TODO(yournamehere): remove after 2021-04-05
+  // TODO(kberg): Remove after 2021-08-15
+  ['EdgeLord', 'Excavator'],
 ]);
 
 export function maybeRenamedAward(name: string): AwardName {

@@ -318,9 +318,21 @@
     background-position: 0px !important;
 }
 
-
 .tag-excavation-count {
   background-image: url(./assets/underworld/excavate.png);
+  border: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  background-size: 34px !important;
+  width: 34px !important;
+  height: 34px !important;
+  filter: brightness(0.8);
+  border-radius: 0px !important;
+  background-position: 0px !important;
+}
+
+.tag-underground-token-count {
+  background-image: url(./assets/underworld/underground-token-background.png);
   border: none !important;
   background-color: transparent !important;
   box-shadow: none !important;
@@ -418,6 +430,11 @@
     position: relative;
     top: -100px;
     visibility: hidden;
+}
+
+.hotkey-target {
+  visibility: hidden;
+  scroll-margin-top: 70px;
 }
 
 .highlighter_box {
@@ -615,7 +632,7 @@
           economizer, pioneer, land-specialist, martian,
           cosmic-settler, botanist, promoter, zoologist, a-manufacturer,
 
-          v-electrician, smith, tradesman, irrigator, capitalist,
+          v-electrician, v-spacefarer, smith, tradesman, irrigator, capitalist,
           forecaster, edgedancer, visionary, naturalist, voyager,
 
           rugged, purifier,
@@ -635,7 +652,7 @@
           collector, electrician, fundraiser, geologist, landshaper, lobbyist, philantropist,
           planetologist, producer, researcher, sponsor, forester, breeder, thermoengineer,
 
-          kingpin, edgelord, tunneler, risktaker,
+          kingpin, excavator, tunneler, risktaker,
         ;
         each(@ma-name, {
           .ma-name--@{value} {
@@ -814,12 +831,16 @@
     }
 }
 
+.player_home_block--underground-tokens {
+  height: 50px;
+}
+
 .deck-size {
     position: absolute;
     width: 33px;
     margin: 30px 0 0 0;
     font-family: Prototype;
-    font-size: 15px;
+    font-size: 11px;
     text-align: center;
     color: #fff;
 }

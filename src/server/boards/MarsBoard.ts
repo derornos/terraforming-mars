@@ -60,7 +60,7 @@ export class MarsBoard extends Board {
   }
 
   /*
-   * Returns spaces on the board with ocean tiless.
+   * Returns spaces on the board with ocean tiles.
    *
    * The default condition is to return those oceans used to count toward the global parameter, so
    * upgraded oceans are included, but Wetlands is not. That's why the boolean values have different defaults.
@@ -85,15 +85,15 @@ export class MarsBoard extends Board {
   public getAvailableSpacesForCity(player: IPlayer, canAffordOptions?: CanAffordOptions, spaces?: ReadonlyArray<Space>): ReadonlyArray<Space> {
     const spacesOnLand = spaces ?? this.getAvailableSpacesOnLand(player, canAffordOptions);
     // Gordon CEO can ignore placement restrictions for Cities+Greenery
-    if (player.cardIsInEffect(CardName.GORDON)) {
+    if (player.tableau.has(CardName.GORDON)) {
       return spacesOnLand;
     }
     // Kingdom of Tauraro can place cities next to cities, but also must place them
-    // next to tiles they own, if possible.
-    if (player.isCorporation(CardName.KINGDOM_OF_TAURARO)) {
+    // next to tiles they own or have an excavation marker, if possible.
+    if (player.tableau.has(CardName.KINGDOM_OF_TAURARO)) {
       const spacesNextToMySpaces = spacesOnLand.filter(
         (space) => this.getAdjacentSpaces(space).some(
-          (adj) => adj.tile !== undefined && adj.player === player));
+          (adj) => (adj.tile !== undefined && adj.player === player || adj.excavator?.id === player.id)));
 
       return (spacesNextToMySpaces.length > 0) ? spacesNextToMySpaces : spacesOnLand;
     }
@@ -121,17 +121,17 @@ export class MarsBoard extends Board {
   }
 
   public getAvailableSpacesForGreenery(player: IPlayer, canAffordOptions?: CanAffordOptions): ReadonlyArray<Space> {
-    let spacesOnLand = this.getAvailableSpacesOnLand(player, canAffordOptions);
+    let availableLandSpaces = this.getAvailableSpacesOnLand(player, canAffordOptions);
     // Gordon CEO can ignore placement restrictions for Cities+Greenery
-    if (player.cardIsInEffect(CardName.GORDON)) return spacesOnLand;
+    if (player.tableau.has(CardName.GORDON)) return availableLandSpaces;
     // Spaces next to Red City are always unavialable for Greeneries.
-    spacesOnLand = this.filterSpacesAroundRedCity(spacesOnLand);
+    availableLandSpaces = this.filterSpacesAroundRedCity(availableLandSpaces);
 
-    const spacesForGreenery = spacesOnLand.filter((space) => {
+    // player can place a greenery in an available land space that is next
+    // to a tile the player already owns.
+    const spacesForGreenery = availableLandSpaces.filter((space) => {
       return this.getAdjacentSpaces(space).some((adj) => {
-        // TODO(kberg): I think "adj.tile.tileTypep !== TileType.OCEAN" can be removed. Probably doesn't work
-        // for ocean city.
-        return MarsBoard.hasRealTile(adj) && adj.player === player && adj.tile?.tileType !== TileType.OCEAN;
+        return MarsBoard.hasRealTile(adj) && adj.player === player;
       });
     });
 
@@ -140,11 +140,11 @@ export class MarsBoard extends Board {
       return spacesForGreenery;
     }
     // Place anywhere if no space owned
-    return spacesOnLand;
+    return availableLandSpaces;
   }
 
   public getAvailableSpacesForOcean(player: IPlayer): ReadonlyArray<Space> {
-    return this.getSpaces(SpaceType.OCEAN, player)
+    return this.getSpaces(SpaceType.OCEAN)
       .filter((space) => space.tile === undefined && (space.player === undefined || space.player === player));
   }
 

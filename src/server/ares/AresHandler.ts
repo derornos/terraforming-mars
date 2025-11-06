@@ -115,7 +115,7 @@ export class AresHandler {
 
     if (giveAresTileOwnerBonus) {
       let ownerBonus = 1;
-      if (adjacentPlayer.cardIsInEffect(CardName.MARKETING_EXPERTS)) {
+      if (adjacentPlayer.tableau.has(CardName.MARKETING_EXPERTS)) {
         ownerBonus = 2;
       }
 
@@ -135,7 +135,7 @@ export class AresHandler {
     });
 
     if (hasAdjacencyBonus) {
-      entry.count++;
+      entry.networkerCount++;
     }
     if (hazardSeverity !== 'none') {
       entry.purifierCount++;
@@ -155,7 +155,7 @@ export class AresHandler {
   }
 
   private static computeAdjacencyCosts(player: IPlayer, space: Space, subjectToHazardAdjacency: boolean): AdjacencyCost {
-    if (player.isCorporation(CardName.ATHENA)) {
+    if (player.tableau.has(CardName.ATHENA)) {
       subjectToHazardAdjacency = false;
     }
 

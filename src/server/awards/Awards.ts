@@ -37,7 +37,7 @@ import {Urbanist} from './terraCimmeria/Urbanist';
 import {Warmonger} from './terraCimmeria/Warmonger';
 import {AZoologist} from './amazonisPlanitia/AZoologist';
 import {Kingpin} from './underworld/Kingpin';
-import {EdgeLord} from './underworld/EdgeLord';
+import {Excavator} from './underworld/Excavator';
 import {Administrator} from './modular/Administrator';
 import {Constructor} from './modular/Constructor';
 import {Founder} from './modular/Founder';
@@ -56,6 +56,7 @@ import {Rugged} from './Rugged';
 import {BoardName} from '../../common/boards/BoardName';
 import {AwardName} from '../../common/ma/AwardName';
 import {MAManifest} from '../ma/MAManifest';
+import {Suburbian} from './modular/Suburbian';
 
 export const awardManifest: MAManifest<AwardName, IAward> = {
   all: {
@@ -97,7 +98,7 @@ export const awardManifest: MAManifest<AwardName, IAward> = {
     'Naturalist': {Factory: Naturalist},
     'Voyager': {Factory: Voyager},
     'Kingpin': {Factory: Kingpin, compatibility: 'underworld'},
-    'EdgeLord': {Factory: EdgeLord, compatibility: 'underworld'},
+    'Excavator': {Factory: Excavator, compatibility: 'underworld'},
     'Administrator': {Factory: Administrator},
     'Constructor': {Factory: Constructor, compatibility: 'colonies'},
     'Founder': {Factory: Founder},
@@ -112,6 +113,7 @@ export const awardManifest: MAManifest<AwardName, IAward> = {
     'Electrician': {Factory: Electrician},
     'Manufacturer': {Factory: Manufacturer},
     'Politician': {Factory: Politician, compatibility: 'turmoil'},
+    'Suburbian': {Factory: Suburbian},
     'Rugged': {Factory: Rugged, compatibility: 'ares'},
   },
   boards: {
@@ -125,12 +127,13 @@ export const awardManifest: MAManifest<AwardName, IAward> = {
     [BoardName.UTOPIA_PLANITIA]: [/* 'Suburbian', 'Investor', 'Botanist', 'Incorporator', 'Metropolist' */],
     [BoardName.VASTITAS_BOREALIS_NOVUS]: ['Traveller', 'Landscaper', 'Highlander', 'Promoter', 'Manufacturer'],
     [BoardName.TERRA_CIMMERIA_NOVUS]: [],
+    [BoardName.HOLLANDIA]: [],
   },
   expansions: {
     venus: ['Venuphile'],
     ares: ['Entrepreneur', 'Rugged'],
     moon: ['Full Moon', 'Lunar Magnate'],
-    underworld: ['Kingpin', 'EdgeLord'],
+    underworld: ['Kingpin', 'Excavator'],
   },
   modular: [
     'Administrator',
@@ -146,6 +149,7 @@ export const awardManifest: MAManifest<AwardName, IAward> = {
     'Metropolist',
     'Mogul',
     'Politician',
+    'Suburbian',
     'Traveller',
   ],
   create: (name: string) => {

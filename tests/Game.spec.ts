@@ -15,7 +15,6 @@ import {SaturnSystems} from '../src/server/cards/corporation/SaturnSystems';
 import {Resource} from '../src/common/Resource';
 import {Space} from '../src/server/boards/Space';
 import {SpaceId} from '../src/common/Types';
-import {ResearchNetwork} from '../src/server/cards/prelude/ResearchNetwork';
 import {ArcticAlgae} from '../src/server/cards/base/ArcticAlgae';
 import {Ecologist} from '../src/server/milestones/Ecologist';
 import {OrOptions} from '../src/server/inputs/OrOptions';
@@ -124,19 +123,19 @@ describe('Game', () => {
     const game = Game.newInstance('game-id', [player, player2], player);
 
     setTemperature(game, 6);
-    let initialTR = player.getTerraformRating();
+    let initialTR = player.terraformRating;
     game.increaseTemperature(player, 2);
 
     expect(game.getTemperature()).to.eq(constants.MAX_TEMPERATURE);
-    expect(player.getTerraformRating()).to.eq(initialTR + 1);
+    expect(player.terraformRating).to.eq(initialTR + 1);
 
-    initialTR = player.getTerraformRating();
+    initialTR = player.terraformRating;
     setTemperature(game, 6);
 
     // Try 3 steps increase
     game.increaseTemperature(player, 3);
     expect(game.getTemperature()).to.eq(constants.MAX_TEMPERATURE);
-    expect(player.getTerraformRating()).to.eq(initialTR + 1);
+    expect(player.terraformRating).to.eq(initialTR + 1);
   });
 
   it('Disallows to set oxygenLevel more than allowed maximum', () => {
@@ -145,11 +144,11 @@ describe('Game', () => {
     const game = Game.newInstance('game-id', [player, player2], player);
 
     setOxygenLevel(game, 13);
-    const initialTR = player.getTerraformRating();
+    const initialTR = player.terraformRating;
     game.increaseOxygenLevel(player, 2);
 
     expect(game.getOxygenLevel()).to.eq(constants.MAX_OXYGEN_LEVEL);
-    expect(player.getTerraformRating()).to.eq(initialTR + 1);
+    expect(player.terraformRating).to.eq(initialTR + 1);
   });
 
   it('Draft round for 2 players', () => {
@@ -398,7 +397,7 @@ describe('Game', () => {
     expect(game.isSoloModeWin()).is.not.true;
 
     // Don't give TR or raise oxygen for final greenery placements
-    expect(player.getTerraformRating()).to.eq(20);
+    expect(player.terraformRating).to.eq(20);
     expect(game.getOxygenLevel()).to.eq(12);
   });
 
@@ -502,26 +501,26 @@ describe('Game', () => {
     const player4 = new Player('p4', 'red', false, 0, 'p4-id');
     const game = Game.newInstance('gto', [player1, player2, player3, player4], player3);
 
-    expect(game.getPlayersInGenerationOrder().map(toName)).deep.eq(['p3', 'p4', 'p1', 'p2']);
+    expect(game.playersInGenerationOrder.map(toName)).deep.eq(['p3', 'p4', 'p1', 'p2']);
 
     game.incrementFirstPlayer();
-    expect(game.getPlayersInGenerationOrder().map(toName)).deep.eq(['p4', 'p1', 'p2', 'p3']);
+    expect(game.playersInGenerationOrder.map(toName)).deep.eq(['p4', 'p1', 'p2', 'p3']);
 
     game.incrementFirstPlayer();
-    expect(game.getPlayersInGenerationOrder().map(toName)).deep.eq(['p1', 'p2', 'p3', 'p4']);
+    expect(game.playersInGenerationOrder.map(toName)).deep.eq(['p1', 'p2', 'p3', 'p4']);
 
     game.incrementFirstPlayer();
-    expect(game.getPlayersInGenerationOrder().map(toName)).deep.eq(['p2', 'p3', 'p4', 'p1']);
+    expect(game.playersInGenerationOrder.map(toName)).deep.eq(['p2', 'p3', 'p4', 'p1']);
 
     game.incrementFirstPlayer();
-    expect(game.getPlayersInGenerationOrder().map(toName)).deep.eq(['p3', 'p4', 'p1', 'p2']);
+    expect(game.playersInGenerationOrder.map(toName)).deep.eq(['p3', 'p4', 'p1', 'p2']);
   });
 
   it('Gets card player for corporation card', () => {
     const player = TestPlayer.BLUE.newPlayer();
     const game = Game.newInstance('gto', [player], player);
     const card = new SaturnSystems();
-    player.corporations.push(card);
+    player.playedCards.push(card);
     expect(game.getCardPlayerOrThrow(card.name)).to.eq(player);
   });
 
@@ -538,13 +537,11 @@ describe('Game', () => {
   it('Check Ecologist Milestone', () => {
     const player = TestPlayer.BLUE.newPlayer();
 
-    const card1 = new ResearchNetwork();
-    const card2 = new ArcticAlgae();
     const ecologist = new Ecologist();
 
-    player.playedCards.push(card1, card2);
+    player.tagsForTest = {plant: 1, microbe: 1};
     expect(ecologist.canClaim(player)).is.not.true;
-    player.playedCards.push(card1, card2);
+    player.tagsForTest = {plant: 1, microbe: 1, wild: 2};
     expect(ecologist.canClaim(player)).is.true;
   });
 
@@ -714,6 +711,7 @@ describe('Game', () => {
       'monsInsuranceOwner',
       'resettable',
       'rng',
+      'underworldDraftEnabled',
     ];
     const serializedValuesNotInGame: Array<keyof SerializedGame> = [
       'seed',
@@ -1014,29 +1012,28 @@ describe('Game', () => {
     Game.newInstance('gameid', [player], player, {ceoExtension: true, startingCeos: 4});
     expect(player.dealtCeoCards).has.lengthOf(4);
   });
-});
 
-it('Arctic Algae works during WGT', () => {
-  const player = TestPlayer.BLUE.newPlayer();
-  const player2 = TestPlayer.RED.newPlayer();
-  player.playedCards.push(new ArcticAlgae());
-  // player2 is first player, and will resolve WGT.
-  const game = Game.newInstance('gameid', [player, player2], player2, {venusNextExtension: true});
-  game.worldGovernmentTerraforming();
-  const orOptions = cast(player2.popWaitingFor(), OrOptions);
-  const oceanAction = cast(orOptions.options.filter((o) => o.title.toString() === 'Add an ocean')[0], SelectSpace);
-  assertPlaceOcean(player2, oceanAction);
-  expect(player.plants).to.eq(0);
-  runAllActions(game);
-  expect(player.plants).to.eq(2);
-});
+  it('Arctic Algae works during WGT', () => {
+    const player = TestPlayer.BLUE.newPlayer();
+    const player2 = TestPlayer.RED.newPlayer();
+    player.playedCards.push(new ArcticAlgae());
+    // player2 is first player, and will resolve WGT.
+    const game = Game.newInstance('gameid', [player, player2], player2, {venusNextExtension: true});
+    game.worldGovernmentTerraforming();
+    const orOptions = cast(player2.popWaitingFor(), OrOptions);
+    const oceanAction = cast(orOptions.options.filter((o) => o.title.toString() === 'Add an ocean')[0], SelectSpace);
+    assertPlaceOcean(player2, oceanAction);
+    expect(player.plants).to.eq(0);
+    runAllActions(game);
+    expect(player.plants).to.eq(2);
+  });
 
-it('Arctic Algae works during WGT before Turmoil', () => {
-  const player = TestPlayer.BLUE.newPlayer();
-  const player2 = TestPlayer.RED.newPlayer();
-  player.playedCards.push(new ArcticAlgae());
-  // player2 is first player, and will resolve WGT.
-  const game = Game.newInstance('gameid', [player, player2], player2, {venusNextExtension: true, turmoilExtension: true});
+  it('Arctic Algae works during WGT before Turmoil', () => {
+    const player = TestPlayer.BLUE.newPlayer();
+    const player2 = TestPlayer.RED.newPlayer();
+    player.playedCards.push(new ArcticAlgae());
+    // player2 is first player, and will resolve WGT.
+    const game = Game.newInstance('gameid', [player, player2], player2, {venusNextExtension: true, turmoilExtension: true});
 
   game.turmoil!.currentGlobalEvent = new TiredEarth(); // Lose one plant for each earth tag you have.
   player.tagsForTest = {earth: 1};
@@ -1049,18 +1046,39 @@ it('Arctic Algae works during WGT before Turmoil', () => {
   cb?.(); // Will gain 2 plants and lose 1 plant.
 
   expect(player.plants).to.eq(1);
-});
+  });
 
-it('game.tags excludes values accordingly', () => {
-  const player = TestPlayer.BLUE.newPlayer();
-  let game = Game.newInstance('gameid', [player], player, {pathfindersExpansion: true});
-  expect(game.tags).to.include(Tag.VENUS);
+  it('game.tags excludes values accordingly', () => {
+    const player = TestPlayer.BLUE.newPlayer();
+    let game = Game.newInstance('gameid', [player], player, {pathfindersExpansion: true});
+    expect(game.tags).to.include(Tag.VENUS);
 
-  game = Game.newInstance('gameid', [player], player, {pathfindersExpansion: true, bannedCards: [
-    CardName.DYSON_SCREENS,
-    CardName.THINK_TANK,
-  ]});
-  expect(game.tags).does.not.include(Tag.VENUS);
+    game = Game.newInstance('gameid', [player], player, {pathfindersExpansion: true, bannedCards: [
+      CardName.DYSON_SCREENS,
+      CardName.THINK_TANK,
+    ]});
+    expect(game.tags).does.not.include(Tag.VENUS);
+  });
+
+  it('creating game sets expansions', () => {
+    const player = TestPlayer.BLUE.newPlayer();
+    const game = Game.newInstance('gameid', [player], player, {pathfindersExpansion: true});
+    expect(game.gameOptions.pathfindersExpansion).is.true;
+    expect(game.gameOptions.expansions.pathfinders).is.true;
+  });
+
+  it('deserializing game sets expansions', () => {
+    const player = TestPlayer.BLUE.newPlayer();
+    const game = Game.newInstance('gameid', [player], player, {pathfindersExpansion: true});
+    const serialized = game.serialize();
+
+    expect(serialized.gameOptions.expansions.pathfinders).is.true;
+
+    const game2 = Game.deserialize(serialized);
+
+    expect(game2.gameOptions.pathfindersExpansion).is.true;
+    expect(game2.gameOptions.expansions.pathfinders).is.true;
+  });
 });
 
 function assertIsJSON(serialized: any) {
